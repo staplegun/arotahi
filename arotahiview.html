@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<!--
+********************************************************************
+* Copyright (c) 2018, Douglas Campbell
+* Licensed under the MIT License
+********************************************************************
+-->
+<html lang="en" class="viewer">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Arotahi | Focus - View - Museum of New Zealand Te Papa Tongarewa</title>
+  <link rel="shortcut icon" href="/arotahi/favicon.ico" type="image/x-icon" />
+  <link rel="stylesheet" href="//stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
+  <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Source+Serif+Pro">
+  <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Assistant">
+  <style>
+  /* after specific fonts, revert to Bootstrap defaults */
+  body {
+    font-family: 'Assistant', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 1.2em;
+  }
+  h2, h3, h4, h5, h6 {
+    color: DarkOliveGreen;
+    font-weight: bold;
+  }
+  .main-heading {
+    font-family: 'Source Serif Pro', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+  /* add back link underlining where Bootstrap removes it */
+  a:link,
+  a:visited {
+    color: DarkOliveGreen;
+    text-decoration: underline;
+  }
+  a:hover,
+  a:active {
+    color: DarkSlateGrey;
+  }
+  #category {
+    color: DarkOliveGreen
+  }
+  .dropdown {
+    font-family: 'Assistant', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 0.9em;
+    color: DarkOliveGreen
+  }
+  .caption {
+    font-size: 0.8em;
+  }
+  .header {
+    background-color: Gainsboro;
+    padding-top: 1.0em;
+    padding-bottom: 0.6em;
+  }
+  .footer {
+    background-color: Gainsboro;
+    padding-top: 1.0em;
+    padding-bottom: 0.4em;
+    font-size: 0.9em;
+  }
+  </style>
+</head>
+
+<body>
+  <div class="header container-fluid">
+    <div class="col-sm-12 col-md-8 col-xl-6 mx-auto">
+      <div class="row">
+        <div class="col-sm-10 main-heading">
+          <h3 class="main-heading"><a href="/arotahi/" style="text-decoration: none;">Arotahi | Focus</a></h3>
+        </div>
+        <div class="col-sm-2 text-right">
+          <a href="about.html" style="text-decoration: none;">About</a>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-sm-6 mx-auto">
+          <p>Choose your audio<br />
+            <select class="form-control dropdown" id="audio-select">
+              <option value="1">No sound</option>
+              <option value="2">Hum</option>
+              <option value="3">Sparkle</option>
+              <option value="4" selected>Hum &amp; Sparkle</option>
+            </select>
+          </p>
+        </div>
+        <div class="col-sm-6 mx-auto">
+          <p>Choose your speed<br />
+            <select class="form-control dropdown" id="speed-select" data-toggle="dropdown">
+              <option value="1">Slow</option>
+              <option value="2">Medium</option>
+              <option value="3">Fast</option>
+            </select>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- my-4 = bootstrap code for: margin top/bottom = 4rem -->
+  <div class="container-fluid my-4">
+    <div class="row">
+      <div class="col-sm-12 col-md-8 col-xl-6 mx-auto">
+
+        <h1 id="category" class="main-heading">Arotahi | Focus</h1>
+        <p>Select an image to begin.</p>
+
+        <div id="menu" class="row">
+          <p>Loading images...</p>
+        </div>
+
+        <p>This uses WiFi/mobile data, see <a href="about.html#data">about data usage</a>.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer container-fluid">
+    <div class="col-sm-12 col-md-8 col-xl-6 mx-auto">
+      <p>Like this? Consider making a donation to the <a href="https://events.mentalhealth.org.nz/home/ways_to_donate" class="link">Mental Health Foundation of NZ</a>
+        or supporting <a href="https://www.tepapa.govt.nz/support-join" class="link">Te Papa</a>.
+      </p>
+    </div>
+  </div>
+
+  <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/openseadragon/2.3.1/openseadragon.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/tone/13.1.4/Tone.js"></script>
+  <script src="//cdn.rawgit.com/richtr/NoSleep.js/v0.7.1/dist/NoSleep.js"></script>
+  <script src="//rawgit.com/staplegun/piwakawaka/master/piwakawaka.js"></script>
+  <script src="//rawgit.com/staplegun/sonifier/master/sonifier.js"></script>
+
+  <script type="text/javascript">
+  // globals
+  var API_BASE = 'https://data.tepapa.govt.nz/collection'
+  var API_KEY = ''
+  var AUDIO_FILE = 'ambient-drone-solfeggio.mp3'
+  var SPEED_1 = 2
+  var SPEED_2 = 5
+  var SPEED_3 = 15
+  var piwakawakaNavigator = void 0
+  var sonifier = void 0
+  var player = void 0
+  var playerReady = false
+  var playerPosition = 0
+  // default to both audio options enabled
+  var sonifierOn = true
+  var playerOn = true
+
+  var sequence = {
+    "note": "default progressive scan path",
+    "sequence": [
+      {
+        "x": "min",
+        "y": "min",
+        "width": 800,
+        "height": 600,
+        "duration": 7,
+        "delay": 2,
+        "note": "Zoom to top left corner"
+      },
+      { "x": "max",  "y": "same", "note": "Pan right" },
+      { "x": "same", "y": "next", "note": "Step down" },
+      { "x": "min",  "y": "same", "note": "Pan left"  },
+      { "x": "same", "y": "next", "note": "Step down", "skip": "overEdge" },
+      { "x": "max",  "y": "same", "note": "Pan right", "skip": "overEdge" },
+      { "x": "same", "y": "next", "note": "Step down", "skip": "overEdge" },
+      { "x": "min",  "y": "same", "note": "Pan left",  "skip": "overEdge" },
+      { "x": "same", "y": "next", "note": "Step down", "skip": "overEdge" },
+      { "x": "max",  "y": "same", "note": "Pan right", "skip": "overEdge" },
+      { "x": "same", "y": "next", "note": "Step down", "skip": "overEdge" },
+      { "x": "min",  "y": "same", "note": "Pan left",  "skip": "overEdge" },
+      { "x": "same", "y": "next", "note": "Step down", "skip": "overEdge" },
+      { "x": "max",  "y": "same", "note": "Pan right", "skip": "overEdge" },
+      {
+        "x": 0,
+        "y": 0,
+        "width": "max",
+        "height": "max",
+        "note": "Zoom out"
+      },
+      {
+        "x": 0,
+        "y": 0,
+        "width": "max",
+        "height": "max",
+        "delay": 5,
+        "note": "Pause at full zoom"
+      }
+    ]
+  }
+
+  // image cropping by IRN
+  var crop = {
+    "21855": [0, 2500, 7999, 3673],
+    "127438": [0, 3000, 12552, 6690],
+    "105337": [0, 1000, 7723, 4962],
+    "514680": [200, 500, 2200, 6500],
+    "1115829": [500, 500, 3520, 2185],
+    "1403384": [500, 500, 2286, 5775]
+  }
+
+  // retrieve URL parameter settings
+  var categoryId = Piwakawaka.getParameterByName('categoryid')
+  var imageId = Piwakawaka.getParameterByName('id')
+  var iiifId = Piwakawaka.getParameterByName('iiif')
+  var speedFactorParm = Piwakawaka.getParameterByName('speed')
+  var audioFile = Piwakawaka.getParameterByName('audio')
+
+  /**
+  * Once the page is ready, create the navigator/sonifier, and build the images menu.
+  */
+  document.addEventListener('DOMContentLoaded', function() {
+
+    // retrieve the list of objects in the group and display
+    if (categoryId) {
+      retrieve('group', [categoryId], null, null, displayMenu)
+    }
+    // just a single image
+    if (imageId) {
+      // Add title
+      $('#category').html('')
+      $('#category').append('Random')
+      $('#menu').html('')
+      retrieve('object', [imageId], null, null, displayImages)
+    }
+
+    if (iiifId) {
+      $('#category').html('')
+      $('#category').append('Image')
+      $('#menu').html('')
+      displayImage('iiifImage', 'View image', '', null, iiifId)
+    }
+
+    // create sonifier
+    sonifier = new Sonifier()
+
+    // create audio file player
+    if (audioFile == null) audioFile = AUDIO_FILE
+    player = new Tone.Player(audioFile, function() {
+      playerReady = true,
+      player.loop = true,
+      player.fadeOut = 5
+      // player.volume = 0
+    }).toMaster()
+
+    // create navigator (with start/stop callbacks)
+    piwakawakaNavigator = new Piwakawaka(null, viewerStarted, viewerStopped)
+    piwakawakaNavigator.setSpeedFactor(SPEED_1)
+
+    // bind speed control buttons
+    $('#speed-select').change(function() {
+      $( "#speed-select option:selected" ).each(function() {
+        switch ( $(this).val() ) {
+          case "3":
+          piwakawakaNavigator.setSpeedFactor(SPEED_3)
+          break;
+          case "2":
+          piwakawakaNavigator.setSpeedFactor(SPEED_2)
+          break;
+          default:
+          piwakawakaNavigator.setSpeedFactor(SPEED_1)
+        }
+      })
+    })
+
+    // bind audio control buttons
+    $('#audio-select').change(function() {
+      $( "#audio-select option:selected" ).each(function() {
+        switch ( $(this).val() ) {
+          case "1":
+            // no audio
+            sonifierOn = false
+            playerOn = false
+            break;
+          case "2":
+            // hum only
+            sonifierOn = true
+            playerOn = false
+            break;
+          case "3":
+            // sparkle only
+            sonifierOn = false
+            playerOn = true
+            break;
+          default:
+            // both
+            sonifierOn = true
+            playerOn = true
+        }
+      })
+    })
+  })
+
+  function viewerStarted() {
+    console.log("play sound callback")
+    // start the sounds playing
+    if (sonifierOn) sonifier.play()
+    console.log("PLAYER STATUS", player.state)
+    if (playerOn) {
+      if (playerReady) {
+        player.start(0, playerPosition)
+      } else {
+        // start playing when ready
+        player.autostart = true
+      }
+    }
+    // start image analyser polling every 3 seconds
+    let canvasElement = piwakawakaNavigator.getViewer().drawer.canvas
+    if (sonifierOn) sonifier.pollCanvasStart(canvasElement, 3)
+  }
+
+  function viewerStopped() {
+    console.log("stop sound callback")
+    // stop image analyser polling
+    if (sonifierOn) sonifier.pollCanvasStop()
+    // stop the sounds playing
+    sonifier.release()
+    // NB: sometimes position returns 0, so let's ignore those
+    if (player.position > 0) playerPosition = player.position
+    player.stop()
+  }
+
+  /**
+  * Queries for multiple resources from the Te Papa Collections API.
+  *
+  * @param {String} - API endpoint, e.g. group, object
+  * @param {Array} - API resource ids
+  * @param {String} - comma-delimited list of record fields to be returned
+  * @param {String} - API field to sort results on
+  * @param {Function} - Callback function to pass the JSON response to
+  */
+  function retrieve(type, ids, fields, sort, callback) {
+    let url = API_BASE + '/' + type + '/'
+    url += '?q=id:' + ids.join('%20OR%20id:')
+    if (fields) url += '&fields=' + fields
+    if (sort) url += '&sort=' + sort
+    console.log("API: " + url)
+    try {
+      $.ajax({
+        url: url,
+        type: "GET",
+        headers: {
+          "x-api-key": API_KEY
+        },
+        contentType: 'application/json; charset=utf-8',
+        dataType: "json",
+        success: function(response, textStatus, jqXHR) {
+          callback(response)
+        },
+        error: function(error, textStatus, errorThrown) {
+          console.log("Retrieve failed: ", error)
+        }
+      })
+    } catch (e) {
+      console.log("Retrieve failed: ", e)
+    }
+  }
+
+  /**
+  *
+  *
+  * @param {Object} - API single resource JSON
+  */
+  function displayMenu(responseJson) {
+    console.log("Response (menu): ", responseJson)
+
+    if (responseJson.results) {
+      responseJson.results.forEach(function(rec) {
+
+        // 1. display category (group) title
+
+        // truncate long titles
+        let title = rec.title
+        if (rec.title.length > 50) {
+          title = title.substring(0, 50) + '...'
+        }
+        html = title
+        // clear existing
+        $('#category').html('')
+        $('#category').append(html)
+
+        // 2. display the objects
+
+        if (rec.aggregatedObjects) {
+          // clear existing menu
+          $('#menu').html('')
+          let objectIds = []
+
+          // prepare set of object ids
+          rec.aggregatedObjects.some(function(o) {
+            objectIds.push(o.id)
+          })
+
+          // retrieve and display
+          console.log("ids", objectIds)
+          retrieve('object', objectIds, 'id,title,hasRepresentation,captionFormatted', 'id', displayImages)
+        }
+      })
+    }
+  }
+
+  /**
+  *
+  *
+  * @param {Object} - API single resource JSON
+  */
+  function displayImages(responseJson) {
+    console.log("Response (images): ", responseJson)
+
+    if (responseJson.results) {
+      responseJson.results.forEach(function(rec) {
+
+        if (rec.hasRepresentation) {
+          displayImage(rec.id, rec.title, rec.captionFormatted, rec.hasRepresentation[0].thumbnailUrl, rec.hasRepresentation[0].iiifUrl)
+        }
+      })
+    }
+  }
+
+  function displayImage(id, title, description, thumbnailUrl, iiifUrl) {
+    // truncate long titles
+    if (title.length > 50) {
+      title = title.substring(0, 50) + '...'
+    }
+
+    // build a button for the image
+    let html = '<div class="col-sm-6 col-md-4" style="margin-bottom:20px;">'
+    if (thumbnailUrl) {
+      html += '<img id="' + id + '" src="' + thumbnailUrl + '" width="100%" alt="' + title + '" />'
+    } else {
+      html += '<img id="' + id + '" src="http://via.placeholder.com/200x150?text=View image">'
+    }
+    html += '<h5 style="margin-top: 15px;">' + title + '</h5>'
+    html += '<p class="caption">' + description + '</p>'
+    html += '</div>'
+
+    // display
+    $('#menu').append(html)
+
+    // bind navigator play to image click
+    $('#' + id).on('click', function() {
+      // load image into navigator
+      piwakawakaNavigator.init(sequence)
+      piwakawakaNavigator.setImageLocation(iiifUrl)
+      // apply any crop boundaries, or reset any previous cropping
+      if (crop[id]) {
+        let dim = crop[id]
+        piwakawakaNavigator.setCrop(dim[0], dim[1], dim[2], dim[3])
+      } else {
+        piwakawakaNavigator.setCrop(null)
+      }
+      // override speed if specified
+      if (speedFactorParm != null) piwakawakaNavigator.setSpeedFactor(speedFactorParm)
+      // begin
+      piwakawakaNavigator.play()
+    })
+  }
+
+  </script>
+
+</body>
+
+</html>

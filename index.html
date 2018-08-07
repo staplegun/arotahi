@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<!--
+********************************************************************
+* Copyright (c) 2018, Douglas Campbell
+* Licensed under the MIT License
+********************************************************************
+-->
+<html lang="en" class="viewer">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Arotahi | Focus - Museum of New Zealand Te Papa Tongarewa</title>
+  <link rel="shortcut icon" href="/arotahi/favicon.ico" type="image/x-icon" />
+  <link rel="manifest" href="/arotahi/manifest.json">
+  <link rel="stylesheet" href="//stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
+  <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Source+Serif+Pro">
+  <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Assistant">
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+  <style>
+  /* after specific fonts, revert to Bootstrap defaults */
+  body {
+    font-family: 'Assistant', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 1.2em;
+  }
+  h2, h3, h4, h5, h6 {
+    color: DarkOliveGreen;
+    font-weight: bold;
+  }
+  .main-heading {
+    font-family: 'Source Serif Pro', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+  a:link,
+  a:visited {
+    color: DarkOliveGreen;
+    text-decoration: underline;
+  }
+  a:hover,
+  a:active {
+    color: DarkSlateGrey;
+  }
+  /* add back link underlining where Bootstrap removes it */
+  .link {
+    text-decoration: underline;
+  }
+  /* override Bootstrap button styling */
+  .btn-success {
+    font-family: 'Assistant', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 1.5em;
+    font-weight: bold;
+    color: DarkOliveGreen !important;
+    background-color: White;
+    border-color: DarkOliveGreen;
+    margin-right: 0.5em;
+    margin-bottom: 0.5em;
+  }
+  .btn-success:hover,
+  .btn-success:not(:disabled):not(.disabled).active {
+    color: White !important;
+    background-color: DarkOliveGreen;
+    border-color: DarkOliveGreen
+  }
+  .header {
+    background-color: Gainsboro;
+    padding-top: 1.5em;
+    padding-bottom: 1.0em;
+  }
+  .footer {
+    background-color: Gainsboro;
+    padding-top: 1.0em;
+    padding-bottom: 0.6em;
+    font-size: 0.9em;
+  }
+  </style>
+</head>
+
+<body>
+  <div class="header container-fluid">
+    <div class="col-sm-12 col-md-8 col-xl-6 mx-auto">
+      <div class="row">
+        <div class="col-sm-10 main-heading">
+          <h1>Arotahi | Focus</h1>
+        </div>
+        <div class="col-sm-2 text-right">
+          <a href="about.html" style="text-decoration: none;">About</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- my-4 = bootstrap code for: margin top/bottom = 4rem -->
+  <div class="container-fluid my-4">
+    <div class="col-sm-12 col-md-8 col-xl-6 mx-auto">
+      <p><img src="https://media.tepapa.govt.nz/collection/222158/thumb" width="20%" alt="Abstract painting River 1" class="img-fluid float-right" />
+        The <em>Arotahi | Focus</em> web app prototype is a mindful viewing experience using the art and taonga from the collections of the Museum of New Zealand Te Papa Tongarewa.
+        For more information, see the <a href="about.html">About</a> page.
+      </p>
+
+      <h5>How to use this web app</h5>
+      <ol>
+        <li>Find somewhere quiet and comfortable, put your headphones on, and take a few minutes to focus on looking.</li>
+        <li>Choose a category below, then select an image to view.</li>
+        <li>Notice the texture, the details, the tones. Use the images and sound and de-stress.</li>
+      </ol>
+
+      <div id="menu" style="margin-top:30px; margin-bottom:30px;">
+        <p>Loading categories...</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer container-fluid">
+    <div class="col-sm-12 col-md-8 col-xl-6 mx-auto">
+      <p>Like this? Consider making a donation to the <a href="https://events.mentalhealth.org.nz/home/ways_to_donate" class="link">Mental Health Foundation of NZ</a>
+        or supporting <a href="https://www.tepapa.govt.nz/support-join" class="link">Te Papa</a>.
+      </p>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+  var API_BASE = 'https://data.tepapa.govt.nz/collection'
+  // Key for publicly available API prototypes
+  var API_KEY = 'RHpT4UNwui7zxO4b1574O8T3K5GydFtA1as6OVyf'
+  let viewerPage = "arotahiview.html"
+  let arotahiGroupIds = [18375, 18372, 18374, 18373]
+  let arotahiObjectIds = []
+
+  /**
+  * Once the page is ready, build the categories menu.
+  */
+  document.addEventListener('DOMContentLoaded', function() {
+    // clear existing menu
+    $('#menu').html('')
+    // retrieve category groups and display as buttons
+    retrieve('group', arotahiGroupIds, null, 'title', displayMenu)
+  })
+
+  /**
+  * Queries for multiple resources from the Te Papa Collections API.
+  *
+  * @param {String} - API endpoint, e.g. group, object
+  * @param {Array} - API resource ids
+  * @param {String} - comma-delimited list of record fields to be returned
+  * @param {String} - API field to sort results on
+  * @param {Function} - Callback function to pass the JSON response to
+  */
+  function retrieve(type, ids, fields, sort, callback) {
+    let url = API_BASE + '/' + type + '/'
+    url += '?q=id:' + ids.join('%20OR%20id:')
+    if (fields) url += '&fields=' + fields
+    if (sort) url += '&sort=' + sort
+    console.log("API: " + url)
+    try {
+      $.ajax({
+        url: url,
+        type: "GET",
+        headers: {
+          "x-api-key": API_KEY
+        },
+        contentType: 'application/json; charset=utf-8',
+        dataType: "json",
+        success: function(response, textStatus, jqXHR) {
+          callback(response)
+        },
+        error: function(error, textStatus, errorThrown) {
+          console.log("Retrieve failed: ", error)
+        }
+      })
+    } catch (e) {
+      console.log("Retrieve failed: ", e)
+    }
+  }
+
+  /**
+  * Displays the records in the supplied response as buttons.
+  *
+  * @param {Object} - API query response JSON
+  */
+  function displayMenu(responseJson) {
+    console.log("Response: ", responseJson)
+    if (responseJson.results) {
+
+      responseJson.results.forEach(function(rec) {
+
+        // truncate long titles
+        let title = rec.title
+        if (rec.title.length > 50) {
+          title = title.substring(0, 50) + '...'
+        }
+        // build a button for each category group
+        html = '<a class="btn btn-success btn-lg" role="button" href="' + viewerPage + '?categoryid=' + rec.id + '" style="text-decoration: none;">' + title + '</a> '
+
+        // display
+        $('#menu').append(html)
+
+        // collect this group's object IDs for random link
+        if (rec.aggregatedObjects) {
+          rec.aggregatedObjects.some(function(o) {
+            arotahiObjectIds.push(o.id)
+          })
+        }
+      })
+
+      // add random link to end
+      let randomNo = Math.floor(Math.random() * arotahiObjectIds.length)
+      let randomId = arotahiObjectIds[randomNo]
+
+      // display
+      html = '<a class="btn btn-success btn-lg" role="button" href="' + viewerPage + '?id=' + randomId + '" style="text-decoration: none;">Random</a> '
+      $('#menu').append(html)
+    }
+  }
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,21 @@
+{
+  "short_name": "Arotahi",
+  "name": "Arotahi | Focus",
+  "icons": [
+    {
+      "src": "/arotahi/eye-2-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/arotahi/eye-2-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/arotahi/",
+  "background_color": "#556B2F",
+  "display": "standalone",
+  "scope": "/arotahi/",
+  "theme_color": "#556B2F"
+}
