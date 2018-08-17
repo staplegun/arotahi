@@ -61,6 +61,14 @@
     font-size: 0.9em;
   }
   </style>
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-80738444-2"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'UA-80738444-2');
+  </script>
 </head>
 
 <body>
@@ -131,9 +139,10 @@
   <script src="//rawgit.com/staplegun/sonifier/master/sonifier.js"></script>
 
   <script type="text/javascript">
+
   // globals
   var API_BASE = 'https://data.tepapa.govt.nz/collection'
-  var API_KEY = ''
+  var API_KEY = 'P7ufPoVJ1n9qcmrbvfYdx3Z2opdexYIm3eVBSboa'
   var AUDIO_FILE = 'ambient-drone-solfeggio.mp3'
   var SPEED_1 = 2
   var SPEED_2 = 5
@@ -143,6 +152,8 @@
   var player = void 0
   var playerReady = false
   var playerPosition = 0
+  var playingCurrentlyLabel = void 0
+  var playingStartedAt = void 0
   // default to both audio options enabled
   var sonifierOn = true
   var playerOn = true
@@ -253,12 +264,15 @@
       $( "#speed-select option:selected" ).each(function() {
         switch ( $(this).val() ) {
           case "3":
+          gtag('event', 'set_speed', {'event_category': 'Options', 'event_label': 'Fast'})
           piwakawakaNavigator.setSpeedFactor(SPEED_3)
           break;
           case "2":
+          gtag('event', 'set_speed', {'event_category': 'Options', 'event_label': 'Medium'})
           piwakawakaNavigator.setSpeedFactor(SPEED_2)
           break;
           default:
+          gtag('event', 'set_speed', {'event_category': 'Options', 'event_label': 'Slow'})
           piwakawakaNavigator.setSpeedFactor(SPEED_1)
         }
       })
@@ -270,21 +284,25 @@
         switch ( $(this).val() ) {
           case "1":
             // no audio
+            gtag('event', 'set_sound', {'event_category': 'Options', 'event_label': 'No Sound'})
             sonifierOn = false
             playerOn = false
             break;
           case "2":
             // hum only
+            gtag('event', 'set_sound', {'event_category': 'Options', 'event_label': 'Hum'})
             sonifierOn = true
             playerOn = false
             break;
           case "3":
             // sparkle only
+            gtag('event', 'set_sound', {'event_category': 'Options', 'event_label': 'Sparkle'})
             sonifierOn = false
             playerOn = true
             break;
           default:
             // both
+            gtag('event', 'set_sound', {'event_category': 'Options', 'event_label': 'Hum and Sparkle'})
             sonifierOn = true
             playerOn = true
         }
@@ -311,6 +329,8 @@
   }
 
   function viewerStopped() {
+    let playingTimeSecs = (performance.now() - playingStartedAt) / 1000
+    gtag("event", "stop", {"event_category": "Videos", "event_label": playingCurrentlyLabel, "value": playingTimeSecs})
     console.log("stop sound callback")
     // stop image analyser polling
     if (sonifierOn) sonifier.pollCanvasStop()
@@ -415,6 +435,15 @@
           displayImage(rec.id, rec.title, rec.captionFormatted, rec.hasRepresentation[0].thumbnailUrl, rec.hasRepresentation[0].iiifUrl)
         }
       })
+      // https://developers.google.com/analytics/devguides/collection/gtagjs/user-timings
+      if (window.performance) {
+        let timeSincePageLoad = Math.round(performance.now());
+        gtag('event', 'timing_complete', {
+          'name': 'load',
+          'value': timeSincePageLoad,
+          'event_category': 'Image list'
+        });
+      }
     }
   }
 
@@ -423,13 +452,14 @@
     if (title.length > 50) {
       title = title.substring(0, 50) + '...'
     }
+    title = title.replace(/"/g, '&quot;')
 
     // build a button for the image
     let html = '<div class="col-sm-6 col-md-4" style="margin-bottom:20px;">'
     if (thumbnailUrl) {
       html += '<img id="' + id + '" src="' + thumbnailUrl + '" width="100%" alt="' + title + '" />'
     } else {
-      html += '<img id="' + id + '" src="http://via.placeholder.com/200x150?text=View image">'
+      html += '<img id="' + id + '" src="http://via.placeholder.com/200x150?text=View image" alt="View image">'
     }
     html += '<h5 style="margin-top: 15px;">' + title + '</h5>'
     html += '<p class="caption">' + description + '</p>'
@@ -440,6 +470,8 @@
 
     // bind navigator play to image click
     $('#' + id).on('click', function() {
+      playingCurrentlyLabel = title + " - object/" + id
+      gtag("event", "play", {"event_category": "Videos", "event_label": playingCurrentlyLabel})
       // load image into navigator
       piwakawakaNavigator.init(sequence)
       piwakawakaNavigator.setImageLocation(iiifUrl)
@@ -453,6 +485,7 @@
       // override speed if specified
       if (speedFactorParm != null) piwakawakaNavigator.setSpeedFactor(speedFactorParm)
       // begin
+      playingStartedAt = performance.now()
       piwakawakaNavigator.play()
     })
   }
