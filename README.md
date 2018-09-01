@@ -10,10 +10,12 @@ contemplation.
 
 [Arotahi | Focus](https://staplegun.github.io/arotahi/)
 
+Shortcut link: http://bit.ly/Arotahi
+
 ## Usage
 
 The web pages display images accessed via
-[Te Papa's Collections API](https://data.tepapa.govt.nz/docs/).
+[Te Papa's Collections API](https://github.com/te-papa/collections-api/wiki).
 
 The `arotahiview.html` page accepts querystring parameters to customise
 the experience:
